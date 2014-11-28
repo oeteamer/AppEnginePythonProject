@@ -2,6 +2,7 @@ import os
 import urllib
 
 from google.appengine.api import users
+from google.appengine.api import modules
 from google.appengine.ext import ndb
 
 import jinja2
@@ -43,11 +44,17 @@ class MainPage(webapp2.RequestHandler):
             url = users.create_login_url(self.request.uri)
             url_linktext = 'Login'
 
+        if modules.get_current_module_name() == 'default':
+            module = 'main'
+        else:
+            module = 'dev'
+
         template_values = {
             'greetings': greetings,
             'guestbook_name': urllib.quote_plus(guestbook_name),
             'url': url,
             'url_linktext': url_linktext,
+            'module': module
         }
 
         template = JINJA_ENVIRONMENT.get_template('index.html')
