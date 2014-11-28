@@ -1,83 +1,70 @@
-import os
-import urllib
+# coding: utf-8
 
-from google.appengine.api import users
+from bs4 import BeautifulSoup
+
+import os
+
 from google.appengine.api import modules
-from google.appengine.ext import ndb
+from google.appengine.api import urlfetch
+import re
 
 import jinja2
 import webapp2
-
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
-DEFAULT_GUESTBOOK_NAME = 'default_guestbook'
+
+def find_volumes(tag):
+    return 'li' == tag.parent.name and tag.name == 'b'
 
 
-def guestbook_key(guestbook_name=DEFAULT_GUESTBOOK_NAME):
-    """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
-    return ndb.Key('Guestbook', guestbook_name)
-
-
-class Greeting(ndb.Model):
-    """Models an individual Guestbook entry."""
-    author = ndb.UserProperty()
-    content = ndb.StringProperty(indexed=False)
-    date = ndb.DateTimeProperty(auto_now_add=True)
+def find_books(tag):
+    return 'li' == tag.parent.name and tag.name == 'a'
 
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
-        guestbook_name = self.request.get('guestbook_name',
-                                          DEFAULT_GUESTBOOK_NAME)
-        greetings_query = Greeting.query(
-            ancestor=guestbook_key(guestbook_name)).order(-Greeting.date)
-        greetings = greetings_query.fetch(10)
+        url = 'http://samlib.ru/a/aleksej_shpik/'
 
-        if users.get_current_user():
-            url = users.create_logout_url(self.request.uri)
-            url_linktext = 'Logout'
-        else:
-            url = users.create_login_url(self.request.uri)
-            url_linktext = 'Login'
+        (author, contents) = self.indexdate_parser(url)
 
-        if modules.get_current_module_name() == 'default':
-            module = 'main'
-        else:
-            module = 'dev'
+        self.viewer({
+            'author': author,
+            'contents': contents
+        })
 
-        template_values = {
-            'greetings': greetings,
-            'guestbook_name': urllib.quote_plus(guestbook_name),
-            'url': url,
-            'url_linktext': url_linktext,
-            'module': module
-        }
+    def indexdate_parser(self, url):
+        response = urlfetch.fetch(url+'indexdate.shtml').content
+        response = response.decode('cp1251')
+        soup = BeautifulSoup(response)
 
+        author = soup.title
+        author = re.search('\.(.*?)\.', author.encode('utf8')).group(0, 1)
+        author = author[1].decode('utf8')
+
+        contents_soup = soup.dl
+
+        volumes = contents_soup.find_all(find_volumes)
+        books = contents_soup.find_all(find_books)
+
+        contents = []
+        for (i, link) in enumerate(books):
+            contents.append({
+                'book': link.get_text(),
+                'href': url+link.get('href'),
+                'volume': volumes[i].get_text()
+            })
+
+        return [author, contents]
+
+    def viewer(self, template_values):
         template = JINJA_ENVIRONMENT.get_template('index.html')
+        self.response.headers['Content-Type'] = 'text/html'
         self.response.write(template.render(template_values))
-
-
-class Guestbook(webapp2.RequestHandler):
-    def post(self):
-        guestbook_name = self.request.get('guestbook_name',
-                                          DEFAULT_GUESTBOOK_NAME)
-        greeting = Greeting(parent=guestbook_key(guestbook_name))
-
-        if users.get_current_user():
-            greeting.author = users.get_current_user()
-
-        greeting.content = self.request.get('content')
-        greeting.put()
-
-        query_params = {'guestbook_name': guestbook_name}
-        self.redirect('/?' + urllib.urlencode(query_params))
-
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
-    ('/sign', Guestbook),
 ], debug=True)
