@@ -10,7 +10,10 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
-- url: .*
+- url: /stylesheets
+  static_dir: stylesheets
+
+- url: /.*
   script: main.app
 
 builtins:
@@ -18,7 +21,6 @@ builtins:
 
 libraries:
 - name: webapp2
-  version: "2.5.2"
-
-- name: MySQLdb
-  version: "latest"
+  version: latest
+- name: jinja2
+  version: latest
