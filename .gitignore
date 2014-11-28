@@ -3,4 +3,3 @@
 vendor/*
 composer.phar
 .DS_Store
-datastore_using.py
