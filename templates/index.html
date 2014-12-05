@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 {% autoescape false %}
-<h3 align="center">{{author}}</h3>
 <table>
       <tr>
-            <th>Произведение</th>
-            <th>Объем</th>
+            <th>Авторы</th>
+            <th>Samlib link</th>
       </tr>
-      {% for item in contents %}
+      {% for author in contents %}
       <tr>
-            <td><a href="{{ item.href }}">{{ item.book }}</a></td>
-            <td align="right">{{ item.volume }}</td>
+            <td><a href="{{ author.href }}">{{ author.name }}</a></td>
+            <td><a href="{{ author.href_samlib }}" target="_blank">Samlib</a></td>
       </tr>
       {% endfor %}
 </table>

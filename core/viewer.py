@@ -13,7 +13,7 @@ class AuthorsWriter():
     def __init__(self, template_file):
         self.template = JINJA_ENVIRONMENT.get_template(template_file)
 
-    def write_index_date(self, author, contents):
+    def write(self, contents, author=''):
         template_values = ({
             'author': author,
             'contents': contents

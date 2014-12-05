@@ -1,4 +1,5 @@
 # coding: utf-8
+import sys
 
 from bs4 import BeautifulSoup
 
@@ -19,26 +20,42 @@ class AuthorsParser():
         pass
 
     @staticmethod
-    def indexdate_parser(url):
-        response = urlfetch.fetch(url+'indexdate.shtml').content
+    def indexdate_parser(author_code):
+        response = urlfetch.fetch(AuthorsParser.get_author_link(author_code)+'/indexdate.shtml').content
         response = response.decode('cp1251')
         soup = BeautifulSoup(response)
+        soup = soup.dl
 
-        author = soup.title
-        author = re.search('\.(.*?)\.', author.encode('utf8')).group(0, 1)
-        author = author[1].decode('utf8')
-
-        contents_soup = soup.dl
-
-        volumes = contents_soup.find_all(find_volumes)
-        books = contents_soup.find_all(find_books)
+        volumes = soup.find_all(find_volumes)
+        books = soup.find_all(find_books)
 
         contents = []
         for (i, link) in enumerate(books):
             contents.append({
                 'book': link.get_text(),
-                'href': url+link.get('href'),
+                'id': link.get('href'),
+                'href': AuthorsParser.get_author_link(author_code)+'/'+link.get('href'),
                 'volume': volumes[i].get_text()
             })
 
-        return [author, contents]
+        return contents
+
+    @staticmethod
+    def get_author_name_from_url(author_code):
+        response = urlfetch.fetch(AuthorsParser.get_author_link(author_code)+'/indexdate.shtml')
+
+        if response.status_code != 200:
+            sys.exit('error with code: '+str(response.status_code))
+
+        response = response.content
+        response = response.decode('cp1251')
+        soup = BeautifulSoup(response)
+        author_string = soup.title.get_text()
+        author_string = re.search('\.(.*?)\.', author_string.encode('utf8')).group(0, 1)
+        name = author_string[1].decode('utf8')
+
+        return name
+
+    @staticmethod
+    def get_author_link(author_code):
+        return 'http://samlib.ru/'+author_code[0]+'/'+author_code

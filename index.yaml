@@ -1,7 +1,27 @@
 indexes:
 
-- kind: Greeting
+- kind: Authors
+  ancestor: no
+  properties:
+  - name: name
+  - name: created_at
+    direction: desc
+
+- kind: Authors
+  ancestor: no
+  properties:
+  - name: name
+  - name: updated_at
+    direction: desc
+
+- kind: AuthorsBooks
   ancestor: yes
   properties:
-  - name: date
+  - name: created_at
+    direction: desc
+
+- kind: AuthorsBooks
+  ancestor: yes
+  properties:
+  - name: created_at
     direction: desc
