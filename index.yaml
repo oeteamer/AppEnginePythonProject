@@ -23,5 +23,5 @@ indexes:
 - kind: AuthorsBooks
   ancestor: yes
   properties:
-  - name: created_at
+  - name: updated_at
     direction: desc
