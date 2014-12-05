@@ -51,9 +51,6 @@ class Authors(webapp2.RequestHandler):
         #     author_entity.volume = item['volume']
         #     author_entity.put()
 
-        for item in contents:
-            item.href = core_parser.AuthorsParser.get_author_link(author['code'])+'/'
-
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(viewer.AuthorsWriter('books.html').write(contents, author['name']))
 
