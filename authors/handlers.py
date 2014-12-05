@@ -29,16 +29,16 @@ class Authors(webapp2.RequestHandler):
         if not author_model:
             models.Authors.create(author).put()
 
-        contents = models.AuthorsBooks.query(ancestor=models.authors_key(author['code'])).order(models.AuthorsBooks.updated_at)
-        contents = contents.fetch()
-        if not contents:
-            contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
-            for item in contents:
-                book = models.AuthorsBooks(parent=models.authors_key(author['code']), id=item['id'])
-                book.book = item['book']
-                book.href = item['href']
-                book.volume = item['volume']
-                book.put()
+        # contents = models.AuthorsBooks.query(ancestor=models.authors_key(author['code'])).order(models.AuthorsBooks.updated_at)
+        # contents = contents.fetch()
+        # if not contents:
+        contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
+        for item in contents:
+            book = models.AuthorsBooks(parent=models.authors_key(author['code']), id=item['id'])
+            book.book = item['book']
+            book.href = item['href']
+            book.volume = item['volume']
+            book.put()
 
         # save author
         # models.Authors.create(author).put()

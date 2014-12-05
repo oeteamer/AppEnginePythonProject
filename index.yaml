@@ -24,4 +24,3 @@ indexes:
   ancestor: yes
   properties:
   - name: updated_at
-    direction: desc
