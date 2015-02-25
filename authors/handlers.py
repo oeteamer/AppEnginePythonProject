@@ -1,6 +1,5 @@
 import webapp2
 import models
-from pprint import pprint
 
 from core import core_parser
 from core import viewer
