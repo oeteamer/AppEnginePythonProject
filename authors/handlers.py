@@ -1,5 +1,6 @@
 import webapp2
 import models
+from pprint import pprint
 
 from core import core_parser
 from core import viewer
@@ -29,16 +30,21 @@ class Authors(webapp2.RequestHandler):
         if not author_model:
             models.Authors.create(author).put()
 
-        # contents = models.AuthorsBooks.query(ancestor=models.authors_key(author['code'])).order(models.AuthorsBooks.updated_at)
-        # contents = contents.fetch()
-        # if not contents:
-        contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
-        for item in contents:
-            book = models.AuthorsBooks(parent=models.authors_key(author['code']), id=item['id'])
-            book.book = item['book']
-            book.href = item['href']
-            book.volume = item['volume']
-            book.put()
+        contents = models.AuthorsBooks.query(ancestor=models.authors_key(author['code'])).order(models.AuthorsBooks.updated_at)
+        contents = contents.fetch()
+
+        parse_contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
+        for parse_item in parse_contents:
+            book_exsist = False
+            for item in contents:
+                if parse_item['book'].encode('utf8') == item.book.encode('utf8'):
+                    book_exsist = True
+                    if parse_item['volume'] != item.volume:
+                        parse_item['updated'] = 1
+                        self.update_book(parse_item, author)
+            if not book_exsist:
+                parse_item['updated'] = 1
+                self.update_book(parse_item, author)
 
         # save author
         # models.Authors.create(author).put()
@@ -52,7 +58,14 @@ class Authors(webapp2.RequestHandler):
         #     author_entity.put()
 
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(viewer.AuthorsWriter('books.html').write(contents, author['name']))
+        self.response.write(viewer.AuthorsWriter('books.html').write(parse_contents, author['name']))
+
+    def update_book(self, item, author):
+        book = models.AuthorsBooks(parent=models.authors_key(author['code']), id=item['id'])
+        book.book = item['book']
+        book.href = item['href']
+        book.volume = item['volume']
+        book.put()
 
     @staticmethod
     def update_books():

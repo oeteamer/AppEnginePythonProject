@@ -21,6 +21,7 @@ class AuthorsParser():
 
     @staticmethod
     def indexdate_parser(author_code):
+        urlfetch.set_default_fetch_deadline(60)
         response = urlfetch.fetch(AuthorsParser.get_author_link(author_code)+'/indexdate.shtml').content
         response = response.decode('cp1251')
         soup = BeautifulSoup(response)

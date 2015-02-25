@@ -5,11 +5,17 @@
       <tr>
             <th>Произведение</th>
             <th>Объем</th>
+            <th>Updated</th>
       </tr>
       {% for item in contents %}
       <tr>
             <td><a href="{{ item.href }}" target="_blank">{{ item.book }}</a></td>
             <td align="right">{{ item.volume }}</td>
+            {% if item.updated is defined and item.updated == 1 %}
+                <td style="text-align: right; color: green;">updated
+            {% else %}
+                <td>
+            {% endif %}</td>
       </tr>
       {% endfor %}
 </table>
