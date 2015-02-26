@@ -40,11 +40,11 @@ class Authors(webapp2.RequestHandler):
                 if parse_item['id'] == item.key.id():
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
-                        parse_item['updated'] = 1
+                        parse_item['updated'] = item.volume+'->'+parse_item['volume']
                         self.update_book(parse_item, author)
                     continue
             if not book_exsist:
-                parse_item['updated'] = 1
+                parse_item['updated'] = '0->'+parse_item['volume']
                 self.update_book(parse_item, author)
 
         self.response.headers['Content-Type'] = 'text/html'
