@@ -33,28 +33,19 @@ class Authors(webapp2.RequestHandler):
         contents = contents.fetch()
 
         parse_contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
+
         for parse_item in parse_contents:
             book_exsist = False
             for item in contents:
-                if parse_item['book'].encode('utf8') == item.book.encode('utf8'):
+                if parse_item['id'] == item.key.id():
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
                         parse_item['updated'] = 1
                         self.update_book(parse_item, author)
+                    continue
             if not book_exsist:
                 parse_item['updated'] = 1
                 self.update_book(parse_item, author)
-
-        # save author
-        # models.Authors.create(author).put()
-
-        # save books from indexdate
-        # contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
-        # for item in contents:
-        #     author_entity = models.AuthorsBooks(parent=models.authors_key(author['code']), id=item['href'])
-        #     author_entity.book = item['book']
-        #     author_entity.volume = item['volume']
-        #     author_entity.put()
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(viewer.AuthorsWriter('books.html').write(parse_contents, author['name']))

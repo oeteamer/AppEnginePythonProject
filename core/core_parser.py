@@ -8,11 +8,21 @@ import re
 
 
 def find_volumes(tag):
-    return 'li' == tag.parent.name and tag.name == 'b'
+    volume = False
+    if 'li' == tag.parent.name and tag.name == 'b':
+        volume = True
+        if not re.search('(.*k)$', tag.get_text().encode('utf8')):
+            volume = False
+
+    return volume
 
 
 def find_books(tag):
     return 'li' == tag.parent.name and tag.name == 'a'
+
+
+def find_book(tag):
+    return tag.name == 'a' and tag.get('href')
 
 
 class AuthorsParser():
@@ -24,20 +34,18 @@ class AuthorsParser():
         urlfetch.set_default_fetch_deadline(60)
         response = urlfetch.fetch(AuthorsParser.get_author_link(author_code)+'/indexdate.shtml').content
         response = response.decode('cp1251')
-        soup = BeautifulSoup(response)
-        soup = soup.dl
-
-        volumes = soup.find_all(find_volumes)
-        books = soup.find_all(find_books)
+        dls = re.findall('<DL>(.*)</DL>', response)
 
         contents = []
-        for (i, link) in enumerate(books):
-            contents.append({
-                'book': link.get_text(),
-                'id': link.get('href'),
-                'href': AuthorsParser.get_author_link(author_code)+'/'+link.get('href'),
-                'volume': volumes[i].get_text()
-            })
+        for (i, dl) in enumerate(dls):
+            book = re.search('<A HREF=(.*)><b>(.*)</b></A>', dl)
+            if book:
+                contents.append({
+                    'book': book.group(2),
+                    'id': book.group(1),
+                    'href': AuthorsParser.get_author_link(author_code)+'/'+book.group(1),
+                    'volume': re.search('<b>([0-9]+k)</b>', dl).group(1)
+                })
 
         return contents
 
