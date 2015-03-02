@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+{% autoescape false %}
+<h3 align="center">{{author}}</h3>
+<table>
+      <tr>
+            <th>Автор</th>
+            <th>Произведение</th>
+            <th>Объем</th>
+      </tr>
+      {% for item in contents %}
+      <tr>
+            <td><a href="/author/{{ item.author_id }}" target="_blank">{{ item.author }}</a></td>
+            <td><a href="{{ item.href }}" target="_blank">{{ item.book }}</a></td>
+      </tr>
+      {% endfor %}
+</table>
+{% endautoescape %}
