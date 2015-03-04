@@ -7,6 +7,21 @@ from datetime import datetime
 from google.appengine.api import taskqueue
 
 
+def datetime_to_string(date_time):
+    year = str(date_time.year)
+    month = date_string_plus_null(date_time.month)
+    day = date_string_plus_null(date_time.day)
+    hour = date_string_plus_null(date_time.hour)
+    minute = date_string_plus_null(date_time.minute)
+    second = date_string_plus_null(date_time.second)
+
+    return year+'-'+month+'-'+day+' '+hour+':'+minute+':'+second
+
+
+def date_string_plus_null(value):
+    return '0'+str(value) if value < 10 else str(value)
+
+
 class Index(webapp2.RequestHandler):
     def get(self):
         authors_model = models.Authors.query().fetch()
@@ -43,13 +58,15 @@ class Authors(webapp2.RequestHandler):
             book_exsist = False
             for item in contents:
                 if parse_item['id'] == item.key.id():
+                    parse_item['updated_at'] = datetime_to_string(item.updated_at)
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
                         parse_item['updated'] = 'Update '+item.volume+'->'+parse_item['volume']
                         Books.update_book(parse_item, author)
                     continue
             if not book_exsist:
-                parse_item['updated'] = 'Added '+datetime.today()
+                parse_item['updated_at'] = datetime_to_string(datetime.today())
+                parse_item['updated'] = 'Added '+datetime_to_string(datetime.today())
                 Books.update_book(parse_item, author)
 
         self.response.headers['Content-Type'] = 'text/html'
@@ -94,7 +111,8 @@ class LastUpdates(webapp2.RedirectHandler):
                     'book': item.book,
                     'id': item.key.id(),
                     'href': item.href,
-                    'volume': item.volume
+                    'volume': item.volume,
+                    'updated_at': datetime_to_string(item.updated_at)
                 })
 
         self.response.headers['Content-Type'] = 'text/html'

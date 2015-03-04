@@ -2,21 +2,23 @@
 {% autoescape false %}
 <h3 align="center">{{author}}</h3>
 <table>
-      <tr>
-            <th>Произведение</th>
-            <th>Объем</th>
-            <th>Updated</th>
-      </tr>
-      {% for item in contents %}
-      <tr>
-            <td><a href="{{ item.href }}" target="_blank">{{ item.book }}</a></td>
-            <td align="right">{{ item.volume }}</td>
-            {% if item.updated is defined %}
-                <td style="text-align: right; color: green;">{{ item.updated }}
-            {% else %}
-                <td>
-            {% endif %}</td>
-      </tr>
-      {% endfor %}
+    <tr>
+        <th>Произведение</th>
+        <th>Объем</th>
+        <th>Updated</th>
+        <th>Updated At</th>
+    </tr>
+        {% for item in contents %}
+        <tr>
+        <td><a href="{{ item.href }}" target="_blank">{{ item.book }}</a></td>
+        <td align="right">{{ item.volume }}</td>
+        {% if item.updated is defined %}
+            <td style="text-align: right; color: green;">{{ item.updated }}
+        {% else %}
+            <td>
+        {% endif %}</td>
+        <td>{{ item.updated_at }}</td>
+    </tr>
+    {% endfor %}
 </table>
 {% endautoescape %}
