@@ -45,11 +45,11 @@ class Authors(webapp2.RequestHandler):
                 if parse_item['id'] == item.key.id():
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
-                        parse_item['updated'] = item.volume+'->'+parse_item['volume']
+                        parse_item['updated'] = 'Update '+item.volume+'->'+parse_item['volume']
                         Books.update_book(parse_item, author)
                     continue
             if not book_exsist:
-                parse_item['updated'] = '0->'+parse_item['volume']
+                parse_item['updated'] = 'Added '+datetime.today()
                 Books.update_book(parse_item, author)
 
         self.response.headers['Content-Type'] = 'text/html'
@@ -66,36 +66,8 @@ class Books():
         book.book = item['book']
         book.href = item['href']
         book.volume = item['volume']
+        book.update_info = item['updated']
         book.put()
-
-
-class DatastoreFlush(webapp2.RequestHandler):
-    def get(self):
-        authors = models.Authors.query().fetch()
-
-        for model in authors:
-            contents = models.AuthorsBooks.query(ancestor=models.authors_key(model.key.id())).fetch()
-            for item in contents:
-                item.key.delete()
-
-
-class UpdateBooks(webapp2.RequestHandler):
-    def get(self):
-        authors_model = models.Authors.query().fetch()
-
-        authors = []
-        for model in authors_model:
-            author_url = '/author/'+model.key.id()
-            taskqueue.add(url=author_url, method='GET')
-
-            authors.append({
-                'href': author_url,
-                'href_samlib': core_parser.AuthorsParser.get_author_link(model.key.id()),
-                'name': model.name
-            })
-
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(viewer.AuthorsWriter('index.html').write(authors))
 
 
 class LastUpdates(webapp2.RedirectHandler):
@@ -127,3 +99,33 @@ class LastUpdates(webapp2.RedirectHandler):
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(viewer.AuthorsWriter('last-updates.html').write(total_contents, 'Updates!'))
+
+
+class UpdateBooks(webapp2.RequestHandler):
+    def get(self):
+        authors_model = models.Authors.query().fetch()
+
+        authors = []
+        for model in authors_model:
+            author_url = '/author/'+model.key.id()
+            taskqueue.add(url=author_url, method='GET')
+
+            authors.append({
+                'href': author_url,
+                'href_samlib': core_parser.AuthorsParser.get_author_link(model.key.id()),
+                'name': model.name
+            })
+
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write(viewer.AuthorsWriter('index.html').write(authors))
+
+
+class DatastoreFlush(webapp2.RequestHandler):
+    def get(self):
+        authors = models.Authors.query().fetch()
+
+        for model in authors:
+            contents = models.AuthorsBooks.query(ancestor=models.authors_key(model.key.id())).fetch()
+            for item in contents:
+                item.key.delete()
+
