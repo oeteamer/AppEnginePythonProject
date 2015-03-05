@@ -62,29 +62,15 @@ class Authors(webapp2.RequestHandler):
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
                         parse_item['update_info'] = 'Update '+item.volume+'->'+parse_item['volume']
-                        Books.update_book(parse_item, author)
+                        models.AuthorsBooks.update_book(parse_item, author)
                     continue
             if not book_exsist:
                 parse_item['updated_at'] = datetime_to_string(datetime.today())
                 parse_item['update_info'] = 'Added '+datetime_to_string(datetime.today())
-                Books.update_book(parse_item, author)
+                models.AuthorsBooks.update_book(parse_item, author)
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(viewer.AuthorsWriter('books.html').write(parse_contents, author['name']))
-
-
-class Books():
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def update_book(item, author):
-        book = models.AuthorsBooks(parent=models.authors_key(author['code']), id=item['id'])
-        book.book = item['book']
-        book.href = item['href']
-        book.volume = item['volume']
-        book.update_info = item['update_info']
-        book.put()
 
 
 class LastUpdates(webapp2.RedirectHandler):
@@ -104,7 +90,6 @@ class LastUpdates(webapp2.RedirectHandler):
                 .fetch()
 
             for item in contents:
-                print item
                 total_contents.append({
                     'author_id': author['code'],
                     'author': author['name'],
@@ -140,7 +125,8 @@ class UpdateBooks(webapp2.RequestHandler):
 
 
 class DatastoreFlush(webapp2.RequestHandler):
-    def get(self):
+    @staticmethod
+    def get():
         authors = models.Authors.query().fetch()
 
         for model in authors:
