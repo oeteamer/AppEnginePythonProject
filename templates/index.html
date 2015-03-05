@@ -1,15 +1,33 @@
 <!DOCTYPE html>
-{% autoescape false %}
-<table>
-      <tr>
-            <th>Авторы</th>
-            <th>Samlib link</th>
-      </tr>
-      {% for author in contents %}
-      <tr>
-            <td><a href="{{ author.href }}">{{ author.name }}</a></td>
-            <td><a href="{{ author.href_samlib }}" target="_blank">Samlib</a></td>
-      </tr>
-      {% endfor %}
-</table>
-{% endautoescape %}
+<html>
+<head>
+    <style>
+        body {
+            background-color: rgb(233, 233, 233);
+        }
+        table {
+            border: 2px solid black;
+            width: 100%;
+        }
+        table td,th {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    {% autoescape false %}
+    <table>
+          <tr>
+                <th>Авторы</th>
+                <th>Samlib link</th>
+          </tr>
+          {% for author in contents %}
+          <tr>
+                <td><a href="{{ author.href }}">{{ author.name }}</a></td>
+                <td><a href="{{ author.href_samlib }}" target="_blank">Samlib</a></td>
+          </tr>
+          {% endfor %}
+    </table>
+    {% endautoescape %}
+</body>
+</html>

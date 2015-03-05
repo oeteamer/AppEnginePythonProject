@@ -61,12 +61,12 @@ class Authors(webapp2.RequestHandler):
                     parse_item['updated_at'] = datetime_to_string(item.updated_at)
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
-                        parse_item['updated'] = 'Update '+item.volume+'->'+parse_item['volume']
+                        parse_item['update_info'] = 'Update '+item.volume+'->'+parse_item['volume']
                         Books.update_book(parse_item, author)
                     continue
             if not book_exsist:
                 parse_item['updated_at'] = datetime_to_string(datetime.today())
-                parse_item['updated'] = 'Added '+datetime_to_string(datetime.today())
+                parse_item['update_info'] = 'Added '+datetime_to_string(datetime.today())
                 Books.update_book(parse_item, author)
 
         self.response.headers['Content-Type'] = 'text/html'
@@ -83,7 +83,7 @@ class Books():
         book.book = item['book']
         book.href = item['href']
         book.volume = item['volume']
-        book.update_info = item['updated']
+        book.update_info = item['update_info']
         book.put()
 
 
@@ -112,6 +112,7 @@ class LastUpdates(webapp2.RedirectHandler):
                     'id': item.key.id(),
                     'href': item.href,
                     'volume': item.volume,
+                    'update_info': item.update_info,
                     'updated_at': datetime_to_string(item.updated_at)
                 })
 
