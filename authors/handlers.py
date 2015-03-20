@@ -41,10 +41,11 @@ class Authors(webapp2.RequestHandler):
     def get(self, author_code):
         author_model = models.Authors.get_by_id(author_code)
         if not author_model:
-            author_model = models.Authors.create({
+            models.Authors.create({
                 'code': author_code,
                 'name': core_parser.AuthorsParser.get_author_name_from_url(author_code)}
             ).put()
+            author_model = models.Authors.get_by_id(author_code)
 
         author = {'code': author_model.key.id(), 'name': author_model.name}
 
