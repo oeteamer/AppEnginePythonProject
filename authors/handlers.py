@@ -109,19 +109,11 @@ class UpdateBooks(webapp2.RequestHandler):
     def get(self):
         authors_model = models.Authors.query().fetch()
 
-        authors = []
         for model in authors_model:
             author_url = '/author/'+model.key.id()
             taskqueue.add(url=author_url, method='GET')
 
-            authors.append({
-                'href': author_url,
-                'href_samlib': core_parser.AuthorsParser.get_author_link(model.key.id()),
-                'name': model.name
-            })
-
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(viewer.AuthorsWriter('index.html').write(authors))
+        self.redirect('/last-updates', True)
 
 
 class DatastoreFlush(webapp2.RequestHandler):
