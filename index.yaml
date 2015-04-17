@@ -24,3 +24,9 @@ indexes:
   ancestor: yes
   properties:
   - name: updated_at
+
+- kind: AuthorsBooks
+  ancestor: yes
+  properties:
+  - name: updated_at
+    direction: desc

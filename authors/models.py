@@ -26,10 +26,20 @@ class AuthorsBooks(ndb.Model):
     updated_at = ndb.DateTimeProperty(auto_now=True, indexed=True)
 
     @staticmethod
-    def update_book(item, author):
+    def create_book_entity(item, author):
         book = AuthorsBooks(parent=authors_key(author['code']), id=item['id'])
         book.book = item['book']
         book.href = item['href']
         book.volume = item['volume']
         book.update_info = item['update_info']
+
+        return book
+
+    @staticmethod
+    def update_book(item, author):
+        book = AuthorsBooks.create_book_entity(item, author)
         book.put()
+
+    @staticmethod
+    def update_books(items):
+        ndb.put_multi(items)

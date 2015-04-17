@@ -55,6 +55,7 @@ class Authors(webapp2.RequestHandler):
 
         parse_contents = core_parser.AuthorsParser.indexdate_parser(author['code'])
 
+        updated_items = []
         for parse_item in parse_contents:
             book_exsist = False
             for item in contents:
@@ -63,12 +64,17 @@ class Authors(webapp2.RequestHandler):
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
                         parse_item['update_info'] = 'Update '+item.volume+'->'+parse_item['volume']
-                        models.AuthorsBooks.update_book(parse_item, author)
+                        book = models.AuthorsBooks.create_book_entity(parse_item, author)
+                        updated_items.append(book)
                     continue
             if not book_exsist:
                 parse_item['updated_at'] = datetime_to_string(datetime.today())
                 parse_item['update_info'] = 'Added '+datetime_to_string(datetime.today())
-                models.AuthorsBooks.update_book(parse_item, author)
+                book = models.AuthorsBooks.create_book_entity(parse_item, author)
+                updated_items.append(book)
+
+        if updated_items:
+            models.AuthorsBooks.update_books(updated_items)
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(viewer.AuthorsWriter('books.html').write(parse_contents, author['name']))
@@ -77,23 +83,33 @@ class Authors(webapp2.RequestHandler):
 class LastUpdates(webapp2.RedirectHandler):
     def get(self):
         authors = models.Authors.query().fetch()
-        date = datetime.today()
-        date = datetime(date.year, date.month, date.day)
+        date = datetime
+        date_from = datetime(date.today().year, date.today().month, date.today().day)
+        date_to = datetime(
+            date.today().year,
+            date.today().month,
+            date.today().day,
+            date.today().hour,
+            date.today().minute,
+            date.today().second
+        )
         total_contents = []
+        author = {}
         for model in authors:
             author_code = model.key.id()
+            author[author_code] = model.name
 
-            author = {'code': author_code, 'name': model.name}
+        contents = models.AuthorsBooks.query()\
+            .filter(models.AuthorsBooks._properties["updated_at"] >= date_from)\
+            .filter(models.AuthorsBooks._properties["updated_at"] <= date_to)\
+            .order(-models.AuthorsBooks.updated_at)\
+            .fetch()\
 
-            contents = models.AuthorsBooks.query(ancestor=models.authors_key(author['code']))\
-                .filter(models.AuthorsBooks._properties["updated_at"] > date)\
-                .order(models.AuthorsBooks.updated_at)\
-                .fetch()
-
-            for item in contents:
+        for item in contents:
+            if item.key.parent().id() in author:
                 total_contents.append({
-                    'author_id': author['code'],
-                    'author': author['name'],
+                    'author_id': item.key.parent().id(),
+                    'author': author[item.key.parent().id()],
                     'book': item.book,
                     'id': item.key.id(),
                     'href': item.href,
@@ -101,6 +117,8 @@ class LastUpdates(webapp2.RedirectHandler):
                     'update_info': item.update_info,
                     'updated_at': datetime_to_string(item.updated_at)
                 })
+            else:
+                item.key.delete()
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(viewer.AuthorsWriter('last-updates.html').write(total_contents, 'Updates!'))
