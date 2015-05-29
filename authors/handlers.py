@@ -145,3 +145,10 @@ class DatastoreFlush(webapp2.RequestHandler):
             for item in contents:
                 item.key.delete()
 
+
+class TaskQueueStats(webapp2.RequestHandler):
+    def get(self):
+        tasks = taskqueue.QueueStatistics.fetch([taskqueue.Queue('default')])
+
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write(tasks[0].tasks)

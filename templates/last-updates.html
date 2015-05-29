@@ -2,10 +2,26 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="/stylesheets/{{ env }}.css">
+    <script src="/js/zepto.min.js"></script>
+    <script>
+        function getTasksInProgressCount() {
+            $.ajax({
+                type: 'GET',
+                url: '/task-stats',
+                success: function(data){
+                    $('#tasksInProgress').text(data);
+                },
+                error: function(xhr, type){
+                    alert(type);
+                }
+            });
+        }
+    </script>
 </head>
 <body>
     {% autoescape false %}
     <h3 align="center">{{author}}</h3>
+    <button onclick="getTasksInProgressCount()">Количество задач в очереди:</button> <span id="tasksInProgress">0</span>
     <table>
         <tr>
             <th>Автор</th>

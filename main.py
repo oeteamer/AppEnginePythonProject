@@ -9,4 +9,5 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/datastore_flush', handlers.DatastoreFlush),
     webapp2.Route('/update-all', handlers.UpdateBooks),
     webapp2.Route('/last-updates', handlers.LastUpdates),
+    webapp2.Route('/task-stats', handlers.TaskQueueStats),
 ], debug=True)
