@@ -30,3 +30,15 @@ indexes:
   properties:
   - name: updated_at
     direction: desc
+
+- kind: AuthorsBooks
+  ancestor: yes
+  properties:
+  - name: volume
+    direction: desc
+
+- kind: AuthorsBooks
+  ancestor: yes
+  properties:
+  - name: updated_at
+  - name: volume

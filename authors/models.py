@@ -20,7 +20,7 @@ class Authors(ndb.Model):
 class AuthorsBooks(ndb.Model):
     book = ndb.StringProperty(indexed=False)
     href = ndb.StringProperty(indexed=False)
-    volume = ndb.StringProperty(indexed=False)
+    volume = ndb.StringProperty(indexed=True)
     update_info = ndb.StringProperty(indexed=False)
     created_at = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
     updated_at = ndb.DateTimeProperty(auto_now=True, indexed=True)
