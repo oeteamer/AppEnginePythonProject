@@ -4,6 +4,9 @@
     <link rel="stylesheet" type="text/css" href="/stylesheets/{{ env }}.css">
     <script src="/js/zepto.min.js"></script>
     <script>
+        $(document).ready(
+            getTasksInProgressCount()
+        );
         function getTasksInProgressCount() {
             $.ajax({
                 type: 'GET',
@@ -16,12 +19,25 @@
                 }
             });
         }
+
+        function UpdateList() {
+            $.ajax({
+                type: 'GET',
+                url: '/update-all'
+            });
+        }
     </script>
 </head>
 <body>
     {% autoescape false %}
     <h3 align="center">{{author}}</h3>
-    <button onclick="getTasksInProgressCount()">Количество задач в очереди:</button> <span id="tasksInProgress">0</span>
+    <div style="float:left;">
+        <button onclick="getTasksInProgressCount()">Количество задач в очереди:</button><span id="tasksInProgress">0</span>
+    </div>
+    <div style="float:right;">
+        <button onclick="UpdateList()">Обновить</button>
+    </div>
+    <div style="clear: both"></div>
     <table>
         <tr>
             <th>Автор</th>

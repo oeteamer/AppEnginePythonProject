@@ -132,7 +132,7 @@ class UpdateBooks(webapp2.RequestHandler):
             author_url = '/author/'+model.key.id()
             taskqueue.add(url=author_url, method='GET')
 
-        self.redirect('/last-updates', True)
+        self.response.write('done')
 
 
 class DatastoreFlush(webapp2.RequestHandler):
