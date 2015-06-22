@@ -63,9 +63,9 @@ class Authors(webapp2.RequestHandler):
                     parse_item['updated_at'] = datetime_to_string(item.updated_at)
                     book_exsist = True
                     if parse_item['volume'] != item.volume:
-                        parse_item['update_info'] = 'Update '+item.volume+'->'+parse_item['volume']
-                        book = models.AuthorsBooks.create_book_entity(parse_item, author)
-                        updated_items.append(book)
+                        item.update_info = 'Update '+item.volume+'->'+parse_item['volume']
+                        item.volume = parse_item['volume']
+                        updated_items.append(item)
                     continue
             if not book_exsist:
                 parse_item['updated_at'] = datetime_to_string(datetime.today())
