@@ -1,22 +1,27 @@
 package base
 
 import (
+	"appengine/datastore"
 	"time"
 )
 
 type Author struct {
-	Code      string    `datastore:"-"`
-	Name      string    `datastore:"name,noindex"`
-	CreatedAt time.Time `datastore:"created_at"`
-	UpdatedAt time.Time `datastore:"updated_at"`
+	ID        *datastore.Key   `datastore:"-"`
+	Code      string           `datastore:"-"`
+	Name      string           `datastore:"name,noindex"`
+	CreatedAt time.Time        `datastore:"created_at"`
+	UpdatedAt time.Time        `datastore:"updated_at"`
+	Books     map[string]*Book `datastore:"-"`
 }
 
-type AuthorsBooks struct {
-	Code       string    `datastore:"-"`
-	Name       string    `datastore:"book,noindex"`
-	Href       string    `datastore:"href,noindex"`
-	Volume     int       `datastore:"volume"`
-	UpdateInfo string    `datastore:"update_info,noindex"`
-	CreatedAt  time.Time `datastore:"created_at"`
-	UpdatedAt  time.Time `datastore:"updated_at"`
+type Book struct {
+	ID         *datastore.Key `datastore:"-"`
+	Code       string         `datastore:"-"`
+	Name       string         `datastore:"book,noindex"`
+	Href       string         `datastore:"href,noindex"`
+	Volume     string         `datastore:"volume"`
+	UpdateInfo string         `datastore:"update_info,noindex"`
+	CreatedAt  time.Time      `datastore:"created_at"`
+	UpdatedAt  time.Time      `datastore:"updated_at"`
+	AuthorCode string         `datastore:"-"`
 }

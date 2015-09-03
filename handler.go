@@ -1,8 +1,11 @@
 package base
 
 import (
+	"appengine"
+	"appengine/taskqueue"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 func init() {
@@ -10,72 +13,99 @@ func init() {
 	http.HandleFunc("/author/", author)
 	http.HandleFunc("/update-all", updateBooks)
 	http.HandleFunc("/authors", showAuthors)
+	http.HandleFunc("/task-stats", showTaskStats)
+
+	http.HandleFunc("/_ah/start", start)
+	http.HandleFunc("/_ah/stop", start)
 }
 
 func showAuthors(w http.ResponseWriter, r *http.Request) {
-	setContext(r)
+	toInit(r)
 
-	getAuthors()
-
-	for a := 0; a < len(Authors); a++ {
-		fmt.Fprint(w, Authors[a].Name)
-		fmt.Fprint(w, "\n")
-	}
+	AuthorsTemplate.Execute(w, Authors)
 }
 
 func author(w http.ResponseWriter, r *http.Request) {
+	toInit(r)
+
 	var (
 		AuthorEntity *Author
 		code         string
 		err          error
 	)
 
-	setContext(r)
 	code, err = getAuthorByUrl(r.URL.Path)
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, err, r)
 		return
 	}
 
-	AuthorEntity, err = getAuthorByCode(code)
-	if err != nil && err.Error() == "datastore: no such entity" {
-		AuthorEntity, err = createNewAuthor(AuthorEntity, AuthorEntity.Code)
-	}
+	if _, b := Authors[code]; b {
+		AuthorEntity = Authors[code]
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+		if isAuthorUpdate(r.URL.Path) {
+			err = updateAuthorBooks(r, AuthorEntity)
+			if err != nil {
+				handleError(w, err, r)
+				return
+			}
+			fmt.Fprint(w, "done")
 
-	if isAuthorUpdate(r.URL.Path) {
-		err = updateAuthorBooks(AuthorEntity)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Fprint(w, "done")
-
-		return
+	} else {
+		AuthorEntity, err = createNewAuthor(r, code)
+		if err != nil {
+			handleError(w, err, r)
+			return
+		}
 	}
 
-	fmt.Fprint(w, AuthorEntity.Name)
+	AuthorTemplate.Execute(w, AuthorEntity)
 }
 
 func updateBooks(w http.ResponseWriter, r *http.Request) {
-	setContext(r)
+	toInit(r)
 
-	fmt.Fprint(w, r.Body)
-}
+	for code := range Authors {
 
-func updateAuthorBooks(Author *Author) error {
-	var err error
+		t := taskqueue.NewPOSTTask(fmt.Sprint("/author/", code, "/update"), map[string][]string{})
+		if _, err := taskqueue.Add(appengine.NewContext(r), t, "default"); err != nil {
+			handleError(w, err, r)
+			return
+		}
+	}
 
-	return err
+	fmt.Fprint(w, "done")
 }
 
 func showUpdatedBooks(w http.ResponseWriter, r *http.Request) {
-	setContext(r)
+	toInit(r)
+	var updatedAuthors = make(map[string]Author, len(Authors))
 
-	fmt.Fprint(w, "showUpdatedBooks")
+	for code, author := range Authors {
+		updatedAuthors[code] = *author
+		for key, book := range updatedAuthors[code].Books {
+			if time.Now().Sub(book.UpdatedAt) > (time.Hour * 24) {
+				delete(updatedAuthors[code].Books, key)
+			}
+		}
+	}
+
+	UpdatedBooksTemplate.Execute(w, updatedAuthors)
+}
+
+func start(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "")
+}
+
+func showTaskStats(w http.ResponseWriter, r *http.Request) {
+	queues, _ := taskqueue.QueueStats(appengine.NewContext(r), []string{"default"}, 0)
+
+	taskAmount := 0
+	for _, queue := range queues {
+		taskAmount += queue.Tasks
+	}
+
+	fmt.Fprint(w, taskAmount)
 }

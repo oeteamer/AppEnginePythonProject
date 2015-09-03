@@ -1,51 +1,74 @@
 package base
 
 import (
+	"appengine"
 	"appengine/urlfetch"
 	"bytes"
 	"code.google.com/p/go-charset/charset"
 	_ "code.google.com/p/go-charset/data"
 	"fmt"
+	"io"
+	"net/http"
 	"regexp"
+	"strings"
+	"time"
 )
 
 var (
 	AuthorMatch, _       = regexp.Compile("/author/([a-z_]+)")
 	AuthorUpdateMatch, _ = regexp.Compile("/author/([a-z_]+)/update")
 	authorNameRegexp, _  = regexp.Compile(`<title>.*?\.\s{0,}(.*?)\s{0,}\..*?</title>`)
+	booksRegexp, _       = regexp.Compile(`<DL><DT>(.*?)</DL>`)
+	bookRegexp, _        = regexp.Compile(`<A HREF=(.*)><b>(.*)</b></A>`)
+	bookVolumeRegexp, _  = regexp.Compile(`<b>([0-9]+k)</b>`)
 )
 
-func parseAuthorName(code string) (string, error) {
-	authorLink := getAuthorLink(code)
+func parseAuthorPage(r *http.Request, code string) (string, []*Book, error) {
+	var (
+		authorName string
+		books      []*Book
+		authorLink = getAuthorLink(code)
+	)
+	//	client := urlfetch.Client(appengine.NewContext(r))
+	//	response, err := client.Get(fmt.Sprint(authorLink, "/indexdate.shtml"))
 
-	client := urlfetch.Client(Context)
-	response, err := client.Get(authorLink)
-	defer response.Body.Close()
+	tr := &urlfetch.Transport{Context: appengine.NewContext(r), Deadline: time.Duration(30) * time.Second}
 
+	req, err := http.NewRequest("GET", fmt.Sprint(authorLink, "/indexdate.shtml"), strings.NewReader(""))
+
+	response, err := tr.RoundTrip(req)
 	if err != nil {
-		return "", err
+		return authorName, books, err
 	} else if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return "", fmt.Errorf(fmt.Sprint("StatusCode = ", response.StatusCode))
+		return authorName, books, fmt.Errorf(fmt.Sprint("StatusCode = ", response.StatusCode))
 	}
 
-	responseBodyReader, _ := charset.NewReader("windows-1251", response.Body)
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(responseBodyReader)
-	responseBody := buf.String()
+	defer response.Body.Close()
 
-	authorName := authorNameRegexp.FindStringSubmatch(responseBody)[1]
+	body := toUTF(response.Body)
 
-	return authorName, err
+	authorName, err = checkMatch(authorNameRegexp.FindStringSubmatch(body))
+
+	booksMatches := booksRegexp.FindAllStringSubmatch(body, 1000)
+	for _, val := range booksMatches {
+		volume := bookVolumeRegexp.FindStringSubmatch(val[0])
+		if len(volume) > 1 {
+			book := bookRegexp.FindStringSubmatch(val[0])
+			books = append(books, &Book{
+				Code:       book[1],
+				Name:       book[2],
+				Href:       authorLink + "/" + book[1],
+				Volume:     volume[1],
+				AuthorCode: code,
+			})
+		}
+	}
+
+	return authorName, books, err
 }
 
 func getAuthorByUrl(url string) (string, error) {
-	match := AuthorMatch.FindStringSubmatch(url)
-
-	if len(match) == 2 {
-		return match[1], nil
-	} else {
-		return "", fmt.Errorf("Author code is invalid")
-	}
+	return checkMatch(AuthorMatch.FindStringSubmatch(url))
 }
 
 func getAuthorLink(code string) string {
@@ -53,10 +76,27 @@ func getAuthorLink(code string) string {
 }
 
 func isAuthorUpdate(url string) bool {
-	match := AuthorUpdateMatch.FindStringSubmatch(url)
-	if len(match) == 2 {
-		return true
-	} else {
+	_, err := checkMatch(AuthorUpdateMatch.FindStringSubmatch(url))
+
+	if err != nil {
 		return false
+	} else {
+		return true
+	}
+}
+
+func toUTF(win1251 io.Reader) string {
+	reader, _ := charset.NewReader("windows-1251", win1251)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(reader)
+
+	return buf.String()
+}
+
+func checkMatch(match []string) (string, error) {
+	if len(match) == 2 {
+		return match[1], nil
+	} else {
+		return "", fmt.Errorf("Matches not found")
 	}
 }
