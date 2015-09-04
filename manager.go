@@ -2,6 +2,7 @@ package base
 
 import (
 	"appengine"
+	//	"appengine/datastore"
 	"log"
 	"net/http"
 	"time"
@@ -12,11 +13,48 @@ var (
 	Authors     map[string]*Author
 	AuthorsKind = "Authors"
 	BooksKind   = "AuthorsBooks"
+
+//	channelParse = make(chan Channel)
 )
+
+//type Worker struct {
+//	id int
+//}
+
+//type Channel struct {
+//	c          appengine.Context
+//	authorCode string
+//}
+
+//func (worker *Worker) process(c chan Channel) {
+//	for {
+//		channel := <-c
+
+//		var (
+//			AuthorEntity *Author
+//			//			err          error
+//		)
+
+//		AuthorEntity = Authors[channel.authorCode]
+
+//		log.Print(datastore.NewKey(channel.c, AuthorsKind, AuthorEntity.Code, 0, nil))
+
+//		//		err = updateAuthorBooks(&channel.r, AuthorEntity)
+//		//		if err != nil {
+//		//			c := appengine.NewContext(&channel.r)
+//		//			c.Errorf("%v", err)
+//		//		}
+//	}
+//}
 
 func toInit(r *http.Request) {
 	if started == false {
-		log.Print("up")
+		//		for i := 0; i < 10; i++ {
+		//			worker := &Worker{id: i}
+		//			go worker.process(channelParse)
+		//		}
+		c := appengine.NewContext(r)
+		c.Infof("%s", "up")
 		//		c := appengine.NewContext(r)
 		//		module := appengine.ModuleName(c)
 		//		if module != "default" {
@@ -81,6 +119,7 @@ func updateAuthorBooks(r *http.Request, Author *Author) error {
 		if _, b := Author.Books[book.Code]; b {
 			if book.Volume != Author.Books[book.Code].Volume {
 				count++
+				Author.Books[book.Code].Name = book.Name
 				Author.Books[book.Code].UpdateInfo = "Updated " + Author.Books[book.Code].Volume + "->" + book.Volume
 				Author.Books[book.Code].Volume = book.Volume
 				updatedBooks = append(updatedBooks, Author.Books[book.Code])
@@ -100,14 +139,14 @@ func updateAuthorBooks(r *http.Request, Author *Author) error {
 		if count == 499 {
 			err = saveBooks(r, updatedBooks)
 			updatedBooks = updatedBooks[:0]
-		} else {
-			c := appengine.NewContext(r)
-			c.Infof("Not new books updates", "")
 		}
 	}
 
 	if len(updatedBooks) > 0 {
 		err = saveBooks(r, updatedBooks)
+	} else {
+		c := appengine.NewContext(r)
+		c.Infof("Not new books updates %s", "")
 	}
 
 	return err

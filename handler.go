@@ -69,6 +69,7 @@ func updateBooks(w http.ResponseWriter, r *http.Request) {
 
 	for code := range Authors {
 
+		//		channelParse <- Channel{c: appengine.NewContext(r), authorCode: code}
 		t := taskqueue.NewPOSTTask(fmt.Sprint("/author/", code, "/update"), map[string][]string{})
 		if _, err := taskqueue.Add(appengine.NewContext(r), t, "default"); err != nil {
 			handleError(w, err, r)
