@@ -23,10 +23,10 @@ var (
 	bookVolumeRegexp, _  = regexp.Compile(`<b>([0-9]+k)</b>`)
 )
 
-func parseAuthorPage(r *http.Request, code string) (string, []*Book, error) {
+func parseAuthorPage(r *http.Request, code string) (string, []Book, error) {
 	var (
 		authorName string
-		books      []*Book
+		books      []Book
 		authorLink = getAuthorLink(code)
 	)
 	//	client := urlfetch.Client(appengine.NewContext(r))
@@ -54,12 +54,13 @@ func parseAuthorPage(r *http.Request, code string) (string, []*Book, error) {
 		volume := bookVolumeRegexp.FindStringSubmatch(val[0])
 		if len(volume) > 1 {
 			book := bookRegexp.FindStringSubmatch(val[0])
-			books = append(books, &Book{
-				Code:       book[1],
-				Name:       book[2],
-				Href:       authorLink + "/" + book[1],
-				Volume:     volume[1],
-				AuthorCode: code,
+			books = append(books, Book{
+				Code:      book[1],
+				Name:      book[2],
+				Href:      authorLink + "/" + book[1],
+				Volume:    volume[1],
+				UpdatedAt: time.Now(),
+				CreatedAt: time.Now(),
 			})
 		}
 	}

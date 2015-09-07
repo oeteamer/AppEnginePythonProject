@@ -10,10 +10,11 @@ import (
 
 func init() {
 	http.HandleFunc("/", showUpdatedBooks)
-	http.HandleFunc("/author/", author)
+	http.HandleFunc("/author/", getAuthorPage)
 	http.HandleFunc("/update-all", updateBooks)
 	http.HandleFunc("/authors", showAuthors)
 	http.HandleFunc("/task-stats", showTaskStats)
+	http.HandleFunc("/add-old-authors", addOldAuthors)
 
 	http.HandleFunc("/_ah/start", start)
 	http.HandleFunc("/_ah/stop", start)
@@ -25,11 +26,11 @@ func showAuthors(w http.ResponseWriter, r *http.Request) {
 	AuthorsTemplate.Execute(w, Authors)
 }
 
-func author(w http.ResponseWriter, r *http.Request) {
+func getAuthorPage(w http.ResponseWriter, r *http.Request) {
 	toInit(r)
 
 	var (
-		AuthorEntity *Author
+		AuthorEntity Author
 		code         string
 		err          error
 	)
@@ -68,7 +69,6 @@ func updateBooks(w http.ResponseWriter, r *http.Request) {
 	toInit(r)
 
 	for code := range Authors {
-
 		//		channelParse <- Channel{c: appengine.NewContext(r), authorCode: code}
 		t := taskqueue.NewPOSTTask(fmt.Sprint("/author/", code, "/update"), map[string][]string{})
 		if _, err := taskqueue.Add(appengine.NewContext(r), t, "default"); err != nil {
@@ -82,15 +82,18 @@ func updateBooks(w http.ResponseWriter, r *http.Request) {
 
 func showUpdatedBooks(w http.ResponseWriter, r *http.Request) {
 	toInit(r)
-	var updatedAuthors = make(map[string]Author, len(Authors))
 
+	var updatedAuthors = make(map[string]Author)
 	for code, author := range Authors {
-		updatedAuthors[code] = *author
-		for key, book := range updatedAuthors[code].Books {
-			if time.Now().Sub(book.UpdatedAt) > (time.Hour * 24) {
-				delete(updatedAuthors[code].Books, key)
+		updatedAuthor := author
+		updatedBooks := make(map[string]Book)
+		for key, book := range author.Books {
+			if time.Now().Sub(book.UpdatedAt) <= (time.Hour * 24) {
+				updatedBooks[key] = book
 			}
 		}
+		updatedAuthor.Books = updatedBooks
+		updatedAuthors[code] = updatedAuthor
 	}
 
 	UpdatedBooksTemplate.Execute(w, updatedAuthors)
@@ -109,4 +112,19 @@ func showTaskStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprint(w, taskAmount)
+}
+
+func addOldAuthors(w http.ResponseWriter, r *http.Request) {
+	toInit(r)
+
+	for _, code := range AllAuthors {
+		//		channelParse <- Channel{c: appengine.NewContext(r), authorCode: code}
+		t := taskqueue.NewPOSTTask(fmt.Sprint("/author/", code), map[string][]string{})
+		if _, err := taskqueue.Add(appengine.NewContext(r), t, "default"); err != nil {
+			handleError(w, err, r)
+			return
+		}
+	}
+
+	fmt.Fprint(w, "done")
 }
