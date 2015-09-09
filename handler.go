@@ -27,7 +27,7 @@ func showAuthors(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAuthorPage(w http.ResponseWriter, r *http.Request) {
-	toInit(r)
+	c := toInit(r)
 
 	var (
 		AuthorEntity Author
@@ -37,7 +37,7 @@ func getAuthorPage(w http.ResponseWriter, r *http.Request) {
 
 	code, err = getAuthorByUrl(r.URL.Path)
 	if err != nil {
-		handleError(w, err, r)
+		handleError(w, err, c)
 		return
 	}
 
@@ -45,9 +45,9 @@ func getAuthorPage(w http.ResponseWriter, r *http.Request) {
 		AuthorEntity = Authors[code]
 
 		if isAuthorUpdate(r.URL.Path) {
-			err = updateAuthorBooks(r, AuthorEntity)
+			err = updateAuthorBooks(c, AuthorEntity)
 			if err != nil {
-				handleError(w, err, r)
+				handleError(w, err, c)
 				return
 			}
 			fmt.Fprint(w, "done")
@@ -55,9 +55,9 @@ func getAuthorPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		AuthorEntity, err = createNewAuthor(r, code)
+		AuthorEntity, err = createNewAuthor(c, code)
 		if err != nil {
-			handleError(w, err, r)
+			handleError(w, err, c)
 			return
 		}
 	}
@@ -66,13 +66,13 @@ func getAuthorPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateBooks(w http.ResponseWriter, r *http.Request) {
-	toInit(r)
+	c := toInit(r)
+	fmt.Fprint(w, "done1")
 
 	for code := range Authors {
-		//		channelParse <- Channel{c: appengine.NewContext(r), authorCode: code}
 		t := taskqueue.NewPOSTTask(fmt.Sprint("/author/", code, "/update"), map[string][]string{})
-		if _, err := taskqueue.Add(appengine.NewContext(r), t, "default"); err != nil {
-			handleError(w, err, r)
+		if _, err := taskqueue.Add(c, t, "default"); err != nil {
+			handleError(w, err, c)
 			return
 		}
 	}
@@ -94,6 +94,7 @@ func showUpdatedBooks(w http.ResponseWriter, r *http.Request) {
 		}
 		updatedAuthor.Books = updatedBooks
 		updatedAuthors[code] = updatedAuthor
+
 	}
 
 	UpdatedBooksTemplate.Execute(w, updatedAuthors)
@@ -115,13 +116,12 @@ func showTaskStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func addOldAuthors(w http.ResponseWriter, r *http.Request) {
-	toInit(r)
+	c := toInit(r)
 
 	for _, code := range AllAuthors {
-		//		channelParse <- Channel{c: appengine.NewContext(r), authorCode: code}
 		t := taskqueue.NewPOSTTask(fmt.Sprint("/author/", code), map[string][]string{})
-		if _, err := taskqueue.Add(appengine.NewContext(r), t, "default"); err != nil {
-			handleError(w, err, r)
+		if _, err := taskqueue.Add(c, t, "default"); err != nil {
+			handleError(w, err, c)
 			return
 		}
 	}

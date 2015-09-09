@@ -3,80 +3,79 @@ package base
 import (
 	"appengine"
 	"appengine/datastore"
-	"net/http"
-	"time"
+	//	"time"
 )
 
-func authorKey(r *http.Request, code string) *datastore.Key {
-	return datastore.NewKey(appengine.NewContext(r), AuthorsKind, code, 0, nil)
+func authorKey(c appengine.Context, code string) *datastore.Key {
+	return datastore.NewKey(c, AuthorsKind, code, 0, nil)
 }
 
-func bookKey(r *http.Request, bookCode string, authorCode string) *datastore.Key {
-	return datastore.NewKey(appengine.NewContext(r), BooksKind, bookCode, 0, authorKey(r, authorCode))
+func bookKey(c appengine.Context, bookCode string, authorCode string) *datastore.Key {
+	return datastore.NewKey(c, BooksKind, bookCode, 0, authorKey(c, authorCode))
 }
 
-func saveAuthor(r *http.Request, Author Author) error {
-	_, err := datastore.Put(appengine.NewContext(r), &Author.ID, &Author)
+func saveAuthor(c appengine.Context, Author Author) error {
+	_, err := datastore.Put(c, &Author.ID, &Author)
 
 	return err
 }
 
-func saveBook(r *http.Request, Book Book) error {
-	Book.UpdatedAt = time.Now()
-	if (Book.CreatedAt == time.Time{}) {
-		Book.CreatedAt = time.Now()
-	}
+//func saveBook(c appengine.Context, Book Book) error {
+//	Book.UpdatedAt = time.Now()
+//	if (Book.CreatedAt == time.Time{}) {
+//		Book.CreatedAt = time.Now()
+//	}
+//
+//	_, err := datastore.Put(c, &Book.ID, Book)
+//
+//	return err
+//}
 
-	_, err := datastore.Put(appengine.NewContext(r), &Book.ID, Book)
-
-	return err
-}
-
-func saveBooks(r *http.Request, books []Book) error {
+func saveBooks(c appengine.Context, books []Book) error {
 	var ids []*datastore.Key
 	for a, _ := range books {
 		ids = append(ids, &books[a].ID)
 	}
 
-	_, err := datastore.PutMulti(appengine.NewContext(r), ids, books)
+	_, err := datastore.PutMulti(c, ids, books)
 
 	return err
 }
 
-func getAuthors(r *http.Request) {
+func getAuthors(c appengine.Context) {
 	var authors []Author
 
 	result := datastore.NewQuery(AuthorsKind)
-	keys, _ := result.GetAll(appengine.NewContext(r), &authors)
+	keys, _ := result.GetAll(c, &authors)
 
 	count := 0
 	Authors = make(map[string]Author, (len(keys) + 10))
 	for _, key := range keys {
 		authors[count].Code = key.StringID()
-		authors[count].ID = *authorKey(r, authors[count].Code)
+		authors[count].ID = *authorKey(c, authors[count].Code)
 		Authors[key.StringID()] = authors[count]
 		count++
 	}
 }
 
-func getBooks(r *http.Request, authorCode string) {
+func getBooks(c appengine.Context, authorCode string) {
 	var books []Book
 
-	result := datastore.NewQuery(BooksKind).Ancestor(authorKey(r, authorCode))
-	keys, _ := result.GetAll(appengine.NewContext(r), &books)
+	result := datastore.NewQuery(BooksKind).Ancestor(authorKey(c, authorCode))
+	keys, _ := result.GetAll(c, &books)
 
 	author := Authors[authorCode]
 	author.Books = make(map[string]Book)
 	for a, key := range keys {
 		books[a].Code = key.StringID()
-		books[a].ID = *bookKey(r, books[a].Code, authorCode)
+		books[a].ID = *bookKey(c, books[a].Code, authorCode)
 		author.Books[key.StringID()] = books[a]
 	}
 	Authors[authorCode] = author
 }
 
-func getAuthor(r *http.Request, code string) {
-	author := &Author{Code: code}
-	k := authorKey(r, code)
-	datastore.Get(appengine.NewContext(r), k, author)
-}
+//func getAuthor(c appengine.Context, code string) {
+//	author := &Author{Code: code}
+//	k := authorKey(c, code)
+//	datastore.Get(c, k, author)
+//}

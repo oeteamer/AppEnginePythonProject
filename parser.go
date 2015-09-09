@@ -23,16 +23,13 @@ var (
 	bookVolumeRegexp, _  = regexp.Compile(`<b>([0-9]+k)</b>`)
 )
 
-func parseAuthorPage(r *http.Request, code string) (string, []Book, error) {
+func parseAuthorPage(c appengine.Context, code string) (string, []Book, error) {
 	var (
 		authorName string
 		books      []Book
 		authorLink = getAuthorLink(code)
 	)
-	//	client := urlfetch.Client(appengine.NewContext(r))
-	//	response, err := client.Get(fmt.Sprint(authorLink, "/indexdate.shtml"))
-
-	tr := &urlfetch.Transport{Context: appengine.NewContext(r), Deadline: time.Duration(30) * time.Second}
+	tr := &urlfetch.Transport{Context: c, Deadline: time.Duration(30) * time.Second}
 
 	req, err := http.NewRequest("GET", fmt.Sprint(authorLink, "/indexdate.shtml"), strings.NewReader(""))
 
