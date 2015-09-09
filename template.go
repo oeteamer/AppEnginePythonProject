@@ -68,10 +68,10 @@ var UpdatedBooksTemplate = template.Must(template.New("updatedBooks").Funcs(temp
     <script src="/js/zepto.min.js"></script>
     <script>
         $(document).ready(
-       		getTasksInProgressCount();
+            getTasksInProgressCount()
         );
         function getTasksInProgressCount() {
-			$.ajax({
+            $.ajax({
                 type: 'GET',
                 url: '/task-stats',
                 success: function(data){
@@ -86,7 +86,7 @@ var UpdatedBooksTemplate = template.Must(template.New("updatedBooks").Funcs(temp
         function UpdateList() {
             $.ajax({
                 type: 'GET',
-                url: '/update-all',
+                url: '/update-all'
             });
         }
     </script>
