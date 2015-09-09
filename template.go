@@ -68,9 +68,10 @@ var UpdatedBooksTemplate = template.Must(template.New("updatedBooks").Funcs(temp
     <script src="/js/zepto.min.js"></script>
     <script>
         $(document).ready(
+       		getTasksInProgressCount();
         );
         function getTasksInProgressCount() {
-            $.ajax({
+			$.ajax({
                 type: 'GET',
                 url: '/task-stats',
                 success: function(data){
