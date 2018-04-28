@@ -15,9 +15,19 @@ func init() {
 	http.HandleFunc("/authors", showAuthors)
 	http.HandleFunc("/task-stats", showTaskStats)
 	http.HandleFunc("/add-old-authors", addOldAuthors)
+	http.HandleFunc("/reload-authors", reloadAuthors)
 
 	http.HandleFunc("/_ah/start", start)
 	http.HandleFunc("/_ah/stop", start)
+}
+
+func reloadAuthors(w http.ResponseWriter, r *http.Request) {
+	c := toInit(r)
+
+	getAuthors(c)
+	for code, _ := range Authors {
+		getBooks(c, code)
+	}
 }
 
 func showAuthors(w http.ResponseWriter, r *http.Request) {

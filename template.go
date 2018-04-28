@@ -83,7 +83,17 @@ var UpdatedBooksTemplate = template.Must(template.New("updatedBooks").Funcs(temp
             });
         }
 
-        function UpdateList() {
+		function authorsReload() {
+            $.ajax({
+                type: 'GET',
+                url: '/reload-authors',
+                success: function(data){
+                    alert('authors reloaded');
+                }
+            });
+        }
+
+        function updateList() {
             $.ajax({
                 type: 'GET',
                 url: '/update-all'
@@ -97,7 +107,7 @@ var UpdatedBooksTemplate = template.Must(template.New("updatedBooks").Funcs(temp
         <button onclick="getTasksInProgressCount()">Количество задач в очереди:</button><span id="tasksInProgress">0</span>
     </div>
     <div style="float:right;">
-        <button onclick="UpdateList()">Обновить</button>
+        <button onclick="updateList()">Обновить</button>
     </div>
     <div style="clear: both"></div>
     <table>
@@ -120,6 +130,9 @@ var UpdatedBooksTemplate = template.Must(template.New("updatedBooks").Funcs(temp
 			{{ end }}
         {{ end }}
     </table>
+ 	<div style="float:left;">
+        <button onclick="authorsReload()">обновить авторов в памяти</button>
+    </div>
 </body>
 </html>
 `))
